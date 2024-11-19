@@ -37,11 +37,38 @@ spec_player = [player for player in players if player["full_name"] == "LeBron Ja
 # [{'id': 1630170, 'full_name': 'Devin Vassell', 'first_name': 'Devin', 'last_name': 'Vassell', 'is_active': True}]
 spec_player_id = spec_player[0]["id"]
 
+"""
+def rank_all_active_players(multiplier=0):
+    player_points = pd.DataFrame(columns=["Points", "Name"])
+    for player in players:
+        player_row = {
+            "Points": calculate_points(player["id"], multiplier),
+            "Name": player["full_name"],
+        }
+        player_points.loc[-1] = player_row
+    player_points.sort_values("Points")
+    return player_points
+"""
 
-def calculate_points(id, multiplier=0):
+
+def display_points_for_individual(id, multiplier=0):
+    game_points = calculate_game_points(id, multiplier)[1]
+    for i in game_points:
+        print(i)
+
+
+def calculate_points(id, multipler=0):
+    points = calculate_game_points(id, multipler)[0]
+    return points
+
+
+def calculate_game_points(id, multiplier=0):
     games = get_games(id, 4)
+    all_points = []
+    total_points = 0
+    times = 0
     for week_games in games:
-        week_points = (
+        week_summary = (
             week_games["FGM"][:] * stats_weight["fgm"]
             + week_games["FGA"][:] * stats_weight["fga"]
             + week_games["FG3M"][:] * stats_weight["tpm"]
@@ -52,9 +79,12 @@ def calculate_points(id, multiplier=0):
             + week_games["STL"][:] * stats_weight["steals"]
             + week_games["BLK"][:] * stats_weight["blocks"]
             + week_games["TOV"][:] * stats_weight["turnovers"]
-            + week_games["PTS"][:] * stats_weight["points"]
+            + week_games["PTS"][:] * stats_weight["points"] * (1 - (multiplier * times))
         )
-        print(week_points)
+        all_points.append(week_summary.to_string())
+        total_points += week_summary.sum()
+        times += 1
+    return (total_points, all_points)
 
 
 def get_games(id, weeks=52):
@@ -93,5 +123,6 @@ def convert_date(date):
     return converted_date
 
 
-calculate_points(spec_player_id)
-# print(convert_date("NOV 02, 2023"))
+# print(players)
+# print(calculate_points(spec_player_id, 0.05))
+# print(rank_all_active_players())
